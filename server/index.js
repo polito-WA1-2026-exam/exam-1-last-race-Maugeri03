@@ -4,14 +4,16 @@ import express from "express";
 import passport from "passport";
 import LocalStrategy from "passport-local"
 import session from "express-session";
-import UserDao from "./UserDao.js";
 import { body, query, validationResult } from "express-validator";
+import UserDao from "./UserDao.js";
+import UndergroundDao from "./UndergroundDao.js";
 
 // ------- Server initialization ---------
 const app = express();
 const port = 3001;
 const PREFIX = "/api"
 const userDao = new UserDao();
+const undergroundDao = new UndergroundDao();
 
 // ------- JSON middleware ---------
 app.use(express.json());
@@ -88,6 +90,18 @@ app.get(`${PREFIX}/best-scores`, isLoggedIn, [
         catch(err){
             res.status(500).send({message: "Internal Server Problem"});
         }
+})
+
+
+// GET /api/game/underground: return the underground object (in JSON format)
+app.get(`${PREFIX}/game/underground`, isLoggedIn, async (req, res)=>{
+    try{
+        const underground = await undergroundDao.getUnderground();
+        return res.status(200).send(underground);
+    }
+    catch(err){
+        return res.status(500).send({message: "Internal Server Problem"});
+    }
 })
 
 
