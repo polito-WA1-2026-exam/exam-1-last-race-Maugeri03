@@ -1,0 +1,20 @@
+@URL_PREFIX = http://localhost:3001/api
+@email = mariorossi@libero.it
+@password = mypassword
+
+
+### Test 1: ask for the first 10 best scores
+GET {{URL_PREFIX}}/best-scores?begin=1&end=10
+
+### Test 2: ask for the best scores
+GET {{URL_PREFIX}}/best-scores?begin=1&end=1
+
+
+### Test 3: wrong begin field
+GET {{URL_PREFIX}}/best-scores?begin=-1&end=-1
+
+### Test 4: wrong end field
+GET {{URL_PREFIX}}/best-scores?begin=1&end=-1
+
+### Test 5: missing parameters
+GET {{URL_PREFIX}}/best-scores
