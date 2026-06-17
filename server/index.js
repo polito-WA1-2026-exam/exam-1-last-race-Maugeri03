@@ -5,6 +5,7 @@ import passport from "passport";
 import LocalStrategy from "passport-local"
 import session from "express-session";
 import UserDao from "./UserDao.js";
+import { body, query, validationResult } from "express-validator";
 
 // ------- Server initialization ---------
 const app = express();
@@ -64,6 +65,31 @@ const isLoggedIn = (req, res, next) => {
         res.status(401).json({ message: "Not authenticated" });
     }
 }
+
+// ------- Users API ---------
+// GET /api/best-scores: return all the user's scores from begin position to end position in the global ranking
+app.get(`${PREFIX}/best-scores`, isLoggedIn, [
+    query("begin").notEmpty().withMessage("Begin field must be present").isInt({min:1}).withMessage("Begin field must be greater or equal to 1"),
+    query("end").notEmpty().withMessage("End field must be present").isInt().custom((param, {req})=>{
+        if(param < req.query.begin){
+            throw new Error("End field must be greater than begin field");
+        }
+        return true;
+    })],
+    async (req, res)=>{
+        const result = validationResult(req);
+        if(!result.isEmpty()){
+            return res.status(400).send({message:"Wrong parameters", causes:result.array()});
+        }
+        try{
+            const ranking = await userDao.getRanking(req.query.begin, req.query.end);
+            res.status(200).send(ranking);
+        }
+        catch(err){
+            res.status(500).send({message: "Internal Server Problem"});
+        }
+})
+
 
 // ------- Session API ---------
 // POST /api/sessions:  creates a new session
