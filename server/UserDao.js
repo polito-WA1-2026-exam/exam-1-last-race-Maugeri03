@@ -1,6 +1,7 @@
 // User DAO
 
 import db from "./db.js"
+import crypto from "crypto"
 
 function UserDao(){
     //Attributes
@@ -17,6 +18,40 @@ function UserDao(){
                 }
                 else{
                     resolve(row);
+                }
+            });
+        });
+    }
+
+
+    this.getUserByCredentials = (email, password)=>{
+        return new Promise((resolve, reject)=>{
+            const sql = "SELECT * FROM users WHERE email=?;";
+            this.db.get(sql, [email], (err, row)=>{
+                if(err){
+                    console.log(err.message);
+                    reject(err);
+                }
+                else{
+                    if(row === undefined){
+                        resolve(undefined);
+                    }
+                    else{
+                        crypto.scrypt(password, row.salt, 64, (err, hashedPassword)=>{
+                            if(err){
+                                console.log(err.message);
+                                reject(err);
+                            }
+                            else{
+                                if(crypto.timingSafeEqual(Buffer.from(row.hashed_password, "hex"), hashedPassword)){
+                                    resolve({id:row.id, email:row.email, username:row.username, best_score:row.best_score});
+                                }
+                                else{
+                                    resolve(undefined);
+                                }
+                            }
+                        });
+                    }
                 }
             });
         });
