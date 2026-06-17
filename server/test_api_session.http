@@ -1,0 +1,38 @@
+### Variables
+@URL_PREFIX = http://localhost:3001/api
+@email = mariorossi@libero.it
+@password = mypassword
+### Test 1: Login - Create a new session
+POST {{URL_PREFIX}}/sessions
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+
+### Test 2: Get the current session (after the login)
+GET {{URL_PREFIX}}/sessions/current
+
+
+### Test 3: Logout - Delete the current session
+DELETE {{URL_PREFIX}}/sessions/current
+
+
+### Test 4: Check that the current session has been cancelled
+GET {{URL_PREFIX}}/sessions/current
+
+
+### Test 5: Login with wrong credentials
+POST {{URL_PREFIX}}/sessions
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "wrongpassword"
+}
+
+
+### Test 6: Get a session without authorization
+GET {{URL_PREFIX}}/sessions/current
