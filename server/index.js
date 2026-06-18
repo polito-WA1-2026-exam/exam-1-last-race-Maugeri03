@@ -5,8 +5,10 @@ import passport from "passport";
 import LocalStrategy from "passport-local"
 import session from "express-session";
 import { body, query, validationResult } from "express-validator";
+import dayjs from "dayjs";
 import UserDao from "./UserDao.js";
 import UndergroundDao from "./UndergroundDao.js";
+import Underground from "./Underground.js";
 
 // ------- Server initialization ---------
 const app = express();
@@ -14,6 +16,8 @@ const port = 3001;
 const PREFIX = "/api"
 const userDao = new UserDao();
 const undergroundDao = new UndergroundDao();
+const GAME_DURATION = 90;
+const CHECK_OFFSET = 5;
 
 // ------- JSON middleware ---------
 app.use(express.json());
@@ -103,6 +107,25 @@ app.get(`${PREFIX}/game/underground`, isLoggedIn, async (req, res)=>{
         return res.status(500).send({message: "Internal Server Problem"});
     }
 })
+
+
+//POST api/game/start: start a new game. If there is still an valid game session, the user must wait until its end for
+//starting a new one
+app.post(`${PREFIX}/game/start`, isLoggedIn, async (req, res)=>{
+    const previousSession = req.session.gameSession;
+    if( previousSession !== undefined &&  (!previousSession.checked && (dayjs().unix() - previousSession.begin ) <= GAME_DURATION)){
+        return res.status(409).send({message: "There is already a valid game session"});
+    }
+    try{
+        const underground = await undergroundDao.getUnderground();
+        const gameSession = underground.getDepartureAndArrival();
+        req.session.gameSession = {...gameSession, begin:dayjs().unix(), checked:false};
+        return res.status(200).send({departure:gameSession.departure, arrival: gameSession.arrival, timeLimit: GAME_DURATION});   
+    }
+    catch(err){
+        return res.status(500).send({message: "Internal Server Problem"});
+    }
+});
 
 
 // ------- Session API ---------
