@@ -1,12 +1,25 @@
 @URL_PREFIX = http://localhost:3001/api
 
+
 ### -------- GET /api/game/underground --------
 ### Test 1: return the underground map
 GET {{URL_PREFIX}}/game/underground
 
+
 ### -------- POST api/game/start --------
 ### Test 1: start a new game session
 POST {{URL_PREFIX}}/game/start
+
+
+### -------- POST api/game/submit --------
+### Test 1: submit a solution
+POST {{URL_PREFIX}}/game/submit
+Content-Type: application/json
+
+{
+    "segmentsId": [10, 9, 16, 15]
+}
+
 
 ### -------- GET /api/best-scores --------
 ### Test 1: ask for the first 10 best scores
@@ -14,7 +27,6 @@ GET {{URL_PREFIX}}/best-scores?begin=1&end=10
 
 ### Test 2: ask for the best scores
 GET {{URL_PREFIX}}/best-scores?begin=1&end=1
-
 
 ### Test 3: wrong begin field
 GET {{URL_PREFIX}}/best-scores?begin=-1&end=-1
