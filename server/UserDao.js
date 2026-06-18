@@ -72,6 +72,22 @@ function UserDao(){
             });
         });
     }
+
+
+    this.updateBestScore = (id, best_score)=>{
+        return new Promise((resolve, reject)=>{
+            const sql = "UPDATE users SET best_score=? WHERE id=?;";
+            this.db.run(sql, [best_score, id], (err)=>{
+                if(err){
+                    console.log(err.message);
+                    reject(err);
+                }
+                else{
+                    resolve();
+                }
+            });
+        });
+    };
 }
 
 export default UserDao;

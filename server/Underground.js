@@ -14,6 +14,14 @@ function Underground({ stations, lines, segments } = {}) {
         return Math.floor(Math.random() * (max));
     }
 
+    //For checkSolution function
+    const initVisited = () => {
+        const visited = {};
+        Object.keys(this.segments).forEach(segmentId => { visited[segmentId] = false; });
+        return visited;
+    }
+    
+
     // Methods
     this.getDepartureAndArrival = () => {
         let valid = false;
@@ -63,6 +71,50 @@ function Underground({ stations, lines, segments } = {}) {
         }
         return { departure, arrival, possibleSolution };
     };
+
+    this.checkSolution = (departure, arrival, segmentsId) => {
+    let valid = true;
+    let current_station = departure;
+    let i = 0;
+    const visited = initVisited();
+    if (segmentsId.length < MIN_DISTANCE) {
+        valid = false;
+    }
+    else {
+        while (valid && current_station != arrival) {
+            if (i < segmentsId.length) {
+                const segmentId = segmentsId[i];
+                const segment = this.segments[segmentId]
+                if (segment && !visited[segmentId]) {
+                    visited[segmentId] = true;
+                    i++;
+                    if (segment.id_station1 == current_station) {
+                        current_station = segment.id_station2;
+                    }
+                    else if (segment.id_station2 == current_station) {
+                        current_station = segment.id_station1;
+                    }
+                    else {
+                        valid = false;
+                    }
+                }
+                else{
+                    valid = false;
+                }
+            }
+            else {
+                valid = false;
+            }
+        }
+        //Check in case of validity if all the segments has been checked
+        if(valid){
+            if(i != segmentsId.length){
+                valid = false;
+            }
+        }
+    }
+    return valid;
+};
 };
 
 export default Underground;

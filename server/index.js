@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import UserDao from "./UserDao.js";
 import UndergroundDao from "./UndergroundDao.js";
 import Underground from "./Underground.js";
+import EventDao from "./EventDao.js";
 
 // ------- Server initialization ---------
 const app = express();
@@ -16,8 +17,10 @@ const port = 3001;
 const PREFIX = "/api"
 const userDao = new UserDao();
 const undergroundDao = new UndergroundDao();
+const eventDao = new EventDao();
 const GAME_DURATION = 90;
 const CHECK_OFFSET = 5;
+const STARTER_COINS = 20;
 
 // ------- JSON middleware ---------
 app.use(express.json());
@@ -121,6 +124,47 @@ app.post(`${PREFIX}/game/start`, isLoggedIn, async (req, res)=>{
         const gameSession = underground.getDepartureAndArrival();
         req.session.gameSession = {...gameSession, begin:dayjs().unix(), checked:false};
         return res.status(200).send({departure:gameSession.departure, arrival: gameSession.arrival, timeLimit: GAME_DURATION});   
+    }
+    catch(err){
+        return res.status(500).send({message: "Internal Server Problem"});
+    }
+});
+
+
+// POST api/game/submit: check if the solution is valid (if sent on time)
+app.post(`${PREFIX}/game/submit`, [isLoggedIn, body("segmentsId").isArray({min:0}).withMessage("SegmentsId must be present and must be an array")], 
+async (req, res)=>{
+    const result = validationResult(req);
+    if(!result.isEmpty()){
+        return res.status(400).send({message:"Wrong parameters", causes:result.array()});
+    }
+    const gameSession = req.session.gameSession;
+    if(gameSession === undefined || gameSession.checked || (dayjs().unix() - gameSession.begin) >= GAME_DURATION + CHECK_OFFSET ){
+        return res.status(400).send({message:"Time expired"});
+    }
+    try{
+        req.session.gameSession.checked = true;
+        const underground = await undergroundDao.getUnderground();
+        const valid = underground.checkSolution(gameSession.departure, gameSession.arrival, req.body.segmentsId);
+        if(valid){
+            const events = await eventDao.getAllEvents();
+            let coins = STARTER_COINS;
+            const list_events = [];
+            for(let i=0; i<req.body.segmentsId.length; i++){
+                const rand = Math.floor(Math.random() * (events.length));
+                const event = events[rand];
+                coins += event.effect;
+                list_events.push(event);
+            }
+            if(coins > req.user.best_score){
+                req.user.best_score = coins;
+                await userDao.updateBestScore(req.user.id, coins);
+            }
+            return res.status(200).send({valid:valid, coins:coins, events:list_events});
+        }
+        else{
+            return res.status(200).send({valid:valid, coins:0, possibleSolution: gameSession.possibleSolution});
+        }
     }
     catch(err){
         return res.status(500).send({message: "Internal Server Problem"});
