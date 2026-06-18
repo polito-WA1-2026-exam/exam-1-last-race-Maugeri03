@@ -4,6 +4,9 @@
 ### Test 1: return the underground map
 GET {{URL_PREFIX}}/game/underground
 
+### -------- POST api/game/start --------
+### Test 1: start a new game session
+POST {{URL_PREFIX}}/game/start
 
 ### -------- GET /api/best-scores --------
 ### Test 1: ask for the first 10 best scores
