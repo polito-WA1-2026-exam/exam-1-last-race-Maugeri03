@@ -77,6 +77,15 @@ function UndergroundDao() {
             else {
                 Promise.all([getAllStations(), getAllLines(), getAllSegments()])
                     .then(([stations, lines, segments]) => {
+
+                        //Define how many lines a station has
+                        Object.entries(stations).forEach(([id, station]) =>{
+                            station.id_lines = [];
+                            Object.values(segments).forEach(segment =>{
+                                if((segment.id_station1 == id || segment.id_station2 == id) && !station.id_lines.includes(segment.id_line)) station.id_lines.push(segment.id_line);
+                            });
+                        });
+
                         const underground = new Underground({ stations: stations, lines: lines, segments: segments });
                         this.underground = underground;
                         resolve(underground);
