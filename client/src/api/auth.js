@@ -27,9 +27,14 @@ async function doLogin(email, password) {
         return result;
     }
     else {
-        const err = new Error(`${result.message}`);
-        err.httpCode = res.status;
-        throw err;
+        if (res.status == 500) {
+            const err = new Error(`${result.message}`);
+            err.httpCode = res.status;
+            throw err;
+        }
+        else {
+            return undefined;
+        }
     }
 };
 
