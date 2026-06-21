@@ -167,15 +167,32 @@
 }
  */
 
- /* Clickable icon */
- .clicable{
-  cursor: pointer
- }
+/* Clickable icon */
+.clickable {
+  cursor: pointer;
+}
 
- /* Big spinner */
- .big-spinner{
+/* Big spinner */
+.big-spinner {
   width: 4rem;
   height: 4rem;
   border-width: 0.4rem;
- }
- 
+}
+
+/* Map dimension */
+.map {
+  width: 100%;
+  max-width: 600px;
+  aspect-ratio: 1 / 1; /* Width / height */
+}
+
+/* Game card */
+.game-card{
+  width: 10rem;
+  height: 8rem;
+}
+
+/* Hover behavior */
+.game-card:hover {
+  transform: scale(1.10); 
+}

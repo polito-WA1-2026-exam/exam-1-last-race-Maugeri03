@@ -16,7 +16,7 @@ function Header(props) {
 
     return (
         <Navbar className="bg-primary">
-            <Container>
+            <Container className="justify-content-between">
                 <Title />
                 {(!userContext.user.id && location.pathname != "/login") && <LoginButton isWaiting={props.isWaitingLog} />}
                 {userContext.user.id && <LogoutContext />}
@@ -33,7 +33,7 @@ function Title(props) {
     };
 
     return <>
-        <Navbar.Brand className="text-white fs-5 clicable" onClick={toHome}>Last Race <Controller size={30} /></Navbar.Brand>
+        <Navbar.Brand className="text-white fs-5 clickable" onClick={toHome}>Last Race <Controller size={30} /></Navbar.Brand>
     </>
 }
 
@@ -52,11 +52,12 @@ function LoginButton(props) {
 
 function LogoutContext(props) {
     const userContext = useContext(UserContext);
+    const location = useLocation();
 
     return (
-        <div className="d-flex justify-content-between align-items-center col-3">
+        <div className="d-flex justify-content-center align-items-center col-3 gap-5">
             <p className="fs-5 text-white m-0">Hello, {userContext.user.username}</p>
-            <LogoutButton />
+            { location.pathname == "/" && <LogoutButton />}
         </div>);
 
 }

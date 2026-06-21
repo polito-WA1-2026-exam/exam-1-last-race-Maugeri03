@@ -1,8 +1,11 @@
 // Game components
 
-import { useContext } from "react";
-import { Row, Col } from "react-bootstrap"
+import { useContext, useEffect, useState } from "react";
+import { Row, Col, Button, Card } from "react-bootstrap"
+import { useNavigate, useLocation } from "react-router";
 import UndergroundContext from "../contexts/UndergroundContext";
+import API from "../api/api";
+
 
 function GameInstruction(props) {
     return (<div className="bg-light border rounded my-3 p-3">
@@ -55,16 +58,16 @@ function GameInstruction(props) {
 
 function GameMap(props) {
     const underground = useContext(UndergroundContext);
-    const isSolution = props.solution? true : false;
-    const segments = isSolution? props.solution.map(segmentId => underground.segments[segmentId]) : underground.segments;
-    const gameMode = props.gameMode? true: false;
-    
-    return <div className="" height="70vh">
-        <svg viewBox="0 0 1000 1000" height="100%" weight="100%">
-            {!gameMode &&  <SegmentsDisplay segments={segments} isSolution={isSolution} />}
+    const isSolution = props.solution ? true : false;
+    const segments = isSolution ? props.solution.map(segmentId => underground.segments[segmentId]) : underground.segments;
+    const gameMode = props.gameMode ? true : false;
+
+    return (
+        <svg viewBox="0 0 1000 1000" className="h-100 w-100">
+            {!gameMode && <SegmentsDisplay segments={segments} isSolution={isSolution} />}
             <StationsDisplay gameMode={gameMode} />
-        </svg>
-    </div>
+        </svg>)
+
 }
 
 
@@ -84,7 +87,7 @@ function SegmentDisplay(props) {
     return <>
         <line x1={station1.station_x} y1={station1.station_y}
             x2={station2.station_x} y2={station2.station_y}
-            strokeWidth="6" stroke={!props.isSolution? line.color : "yellow"} />
+            strokeWidth="6" stroke={!props.isSolution ? line.color : "yellow"} />
     </>
 
 }
@@ -111,7 +114,7 @@ function StationDisplay(props) {
         {(!props.gameMode && station.id_lines.length == 1) && <circle cx={station.station_x} cy={station.station_y} r="7" fill="white" stroke={lines[station.id_lines[0]].color} strokeWidth="3"></circle>}
 
         {/* Stations' name */}
-         <text x={station.name_x} y={station.name_y} fontSize="14" fill="black" fontWeight="bold">
+        <text x={station.name_x} y={station.name_y} fontSize="17" fill="black" fontWeight="bold">
             {station.name}
         </text>
 
@@ -119,4 +122,162 @@ function StationDisplay(props) {
 }
 
 
-export { GameInstruction, GameMap };
+function GameStartButton(props) {
+    const navigate = useNavigate();
+    const [isWaiting, setIsWaiting] = useState(false);
+
+    async function start() {
+        setIsWaiting(true);
+        try {
+            const res = await API.startGame();
+            const gameSession = { departure: res.departure, arrival: res.arrival, timeLimit: res.timeLimit };
+            navigate("/game", { state: gameSession });
+        }
+        catch (err) {
+            //TODO
+            console.log(err);
+        }
+        finally {
+            setIsWaiting(false);
+        }
+    };
+
+    return (
+        <Button variant={!isWaiting ? "primary" : "secondary"} onClick={start} disabled={isWaiting} >{!isWaiting ? "New Game" : "Starting ..."}</Button>
+    )
+}
+
+
+function GameSession(props) {
+    const underground = useContext(UndergroundContext);
+    const stations = underground.stations;
+    const location = useLocation();
+    const gameSession = location.state;
+    const [timer, setTimer] = useState(gameSession.timeLimit);
+    const [userSolution, setUserSolution] = useState([]);
+    const [nonSelectedSegments, setNonSelectedSegments] = useState(Object.keys(underground.segments));
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const navigate = useNavigate();
+
+    function solutionAddSegment(segmentId) {
+        setUserSolution(solution => solution.concat(segmentId));
+        setNonSelectedSegments(segments => segments.filter(seg => seg != segmentId));
+    }
+
+    function solutionRemoveSegment(segmentId) {
+        const index = userSolution.indexOf(segmentId);
+        const newUserSolution = userSolution.slice(0, index);
+        const removedSegments = userSolution.slice(index);
+        setUserSolution(newUserSolution);
+        setNonSelectedSegments(segments => segments.concat(removedSegments));
+    }
+
+
+    function submit(){
+        setIsSubmitted(true);
+    }
+
+    //For decreasing the timer
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setTimer(timer => timer-1);
+        }, 1000);
+        return () => { clearInterval(intervalId); };
+    }, []);
+
+    //For submitting the solution
+    useEffect(()=>{
+        if(timer > 0 && !isSubmitted) return;
+        navigate("/game-solution", {state: userSolution});
+    }, [timer, userSolution, isSubmitted, navigate])
+
+    return <>
+        {/* Title */}
+        <Row className="mt-3">
+            <h2 className="text-center">Build the path !</h2>
+        </Row>
+        {/* Information */}
+        <Row className="justify-content-center">
+            <Col className="col-7">
+                {/* Information */}
+                <div className="bg-light border rounded p-3 text-center">
+                    <h4>{`Timer: ${timer}`}</h4>
+                    <h4>{`Departure: ${stations[gameSession.departure].name}`}</h4>
+                    <h4>{`Arrival: ${stations[gameSession.arrival].name}`}</h4>
+                </div>
+            </Col>
+            <Col className="col-6">
+            </Col>
+        </Row>
+        {/* Cards + map */}
+        <Row className="my-4">
+            {/* Cards */}
+            <Col className="col-7">
+                <GameCards nonSelectedSegments={nonSelectedSegments} userSolution={userSolution} addSegment={solutionAddSegment} removeSegment={solutionRemoveSegment} />
+            </Col>
+            {/* Map */}
+            <Col className="col-5 d-flex flex-column justify-content-center">
+                <div className="map border rounded mb-3">
+                    <GameMap gameMode={true} />
+                </div>
+                <GameSubmitButton submit={submit}/>
+            </Col>
+        </Row>
+    </>
+}
+
+
+function GameCards(props) {
+    const underground = useContext(UndergroundContext);
+    const segments = underground.segments;
+    return (
+        <div className="d-flex flex-wrap justify-content-center gap-3">
+            {/* Selected cards */}
+            {props.userSolution.map(segmentId =>
+                <GameCard key={segmentId} segment={segments[segmentId]} id={segmentId} addSegment={props.addSegment} removeSegment={props.removeSegment} isSelected={true} />
+            )}
+
+            {/* Other cards */}
+            {props.nonSelectedSegments.map(segmentId =>
+                <GameCard key={segmentId} segment={segments[segmentId]} id={segmentId} addSegment={props.addSegment} removeSegment={props.removeSegment} isSelected={false} />
+            )}
+        </div>)
+}
+
+
+function GameCard(props) {
+    const underground = useContext(UndergroundContext);
+    const stations = underground.stations;
+    const [isSelected, setIsSelected] = useState(props.isSelected);
+
+    function toggle() {
+        if (isSelected) {
+            props.removeSegment(props.id);
+        }
+        else {
+            props.addSegment(props.id);
+        }
+        setIsSelected(value => { return !value });
+    }
+
+    return (
+        <Card border={!isSelected ? "secondary" : "success"} className={`game-card clickable ${isSelected ? "border-4" : ""}`} onClick={toggle} >
+            <Card.Header className={`text-center ${isSelected? "bg-success-subtle":""} `} >Segment</Card.Header>
+            <Card.Body className="p-3">
+                <Card.Text className="text-center">
+                    {stations[props.segment.id_station1].name}
+                    <br />
+                    {stations[props.segment.id_station2].name}
+                </Card.Text>
+            </Card.Body>
+        </Card>
+
+    )
+}
+
+
+function GameSubmitButton(props){
+    return <Button onClick={props.submit} >Submit</Button>
+}
+
+export { GameInstruction, GameMap, GameStartButton, GameSession };

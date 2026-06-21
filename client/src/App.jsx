@@ -13,7 +13,7 @@ import API from "./api/api.js"
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import { LoginForm } from "./components/LoginForm.jsx"
-import { GameInstruction, GameMap, GameStartButton } from "./components/Game.jsx"
+import { GameInstruction, GameMap, GameStartButton, GameSession } from "./components/Game.jsx"
 
 
 function App() {
@@ -70,6 +70,7 @@ function App() {
           <Route path="/" element={<PageLayout isWaitingLog={isWaitingLog} />}>
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginForm />} />
+            <Route path="game" element={<GameSession />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
         </Routes>
@@ -108,20 +109,26 @@ function HomePage(props) {
 }
 
 
-function StartGamePage(props){
+function StartGamePage(props) {
   const underground = useContext(UndergroundContext);
 
   return <>
     <Row className='align-items-center'>
       {/* Instructions */}
       <Col className='col-6'>
-        <GameInstruction/>
+        <GameInstruction />
       </Col>
       {/* Underground map + button for starting the game */}
-      <Col className={`col-6 my-3 ${underground.stations === undefined ? "d-flex justify-content-center":""}`}>
-        {underground.stations !== undefined && <GameMap/>}
+      <Col className={"col-6 my-3 d-flex flex-column justify-content-center"}>
+        {/* Case: loaded map */}
+        {underground.stations !== undefined && <div className='map' ><GameMap/></div>}
+        {underground.stations !== undefined && <div className='d-flex justify-content-center gap-5 mt-4'>
+            <GameStartButton/>
+            <GameStartButton/>
+          </div>}
+        {/* Case> unloaded map */}
         {underground.stations === undefined && <Spinner variant="primary" animation="border" className="big-spinner" />}
-        {underground.stations !== undefined && <GameStartButton/>}
+
       </Col>
     </Row>
   </>
