@@ -57,7 +57,7 @@ function LogoutContext(props) {
     return (
         <div className="d-flex justify-content-center align-items-center col-3 gap-5">
             <p className="fs-5 text-white m-0">Hello, {userContext.user.username}</p>
-            { location.pathname == "/" && <LogoutButton />}
+            { (location.pathname == "/"  || location.pathname == "/game-solution")  && <LogoutButton />}
         </div>);
 
 }

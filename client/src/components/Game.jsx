@@ -1,10 +1,11 @@
 // Game components
 
 import { useContext, useEffect, useState } from "react";
-import { Row, Col, Button, Card } from "react-bootstrap"
+import { Row, Col, Button, Card, ListGroup } from "react-bootstrap"
 import { useNavigate, useLocation } from "react-router";
 import UndergroundContext from "../contexts/UndergroundContext";
 import API from "../api/api";
+import UserContext from "../contexts/UserContext";
 
 
 function GameInstruction(props) {
@@ -87,7 +88,7 @@ function SegmentDisplay(props) {
     return <>
         <line x1={station1.station_x} y1={station1.station_y}
             x2={station2.station_x} y2={station2.station_y}
-            strokeWidth="6" stroke={!props.isSolution ? line.color : "yellow"} />
+            strokeWidth="6" stroke={!props.isSolution ? line.color : "black"} />
     </>
 
 }
@@ -173,22 +174,22 @@ function GameSession(props) {
     }
 
 
-    function submit(){
+    function submit() {
         setIsSubmitted(true);
     }
 
     //For decreasing the timer
     useEffect(() => {
         const intervalId = setInterval(() => {
-            setTimer(timer => timer-1);
+            setTimer(timer => timer - 1);
         }, 1000);
         return () => { clearInterval(intervalId); };
     }, []);
 
     //For submitting the solution
-    useEffect(()=>{
-        if(timer > 0 && !isSubmitted) return;
-        navigate("/game-solution", {state: userSolution});
+    useEffect(() => {
+        if (timer > 0 && !isSubmitted) return;
+        navigate("/game-solution", { state: userSolution });
     }, [timer, userSolution, isSubmitted, navigate])
 
     return <>
@@ -220,7 +221,7 @@ function GameSession(props) {
                 <div className="map border rounded mb-3">
                     <GameMap gameMode={true} />
                 </div>
-                <GameSubmitButton submit={submit}/>
+                <GameSubmitButton submit={submit} />
             </Col>
         </Row>
     </>
@@ -262,7 +263,7 @@ function GameCard(props) {
 
     return (
         <Card border={!isSelected ? "secondary" : "success"} className={`game-card clickable ${isSelected ? "border-4" : ""}`} onClick={toggle} >
-            <Card.Header className={`text-center ${isSelected? "bg-success-subtle":""} `} >Segment</Card.Header>
+            <Card.Header className={`text-center ${isSelected ? "bg-success-subtle" : ""} `} >Segment</Card.Header>
             <Card.Body className="p-3">
                 <Card.Text className="text-center">
                     {stations[props.segment.id_station1].name}
@@ -276,8 +277,134 @@ function GameCard(props) {
 }
 
 
-function GameSubmitButton(props){
+function GameSubmitButton(props) {
     return <Button onClick={props.submit} >Submit</Button>
 }
 
-export { GameInstruction, GameMap, GameStartButton, GameSession };
+
+function GameResult(props) {
+    const location = useLocation();
+    const userSolution = location.state;
+    const userContext = useContext(UserContext);
+    const [result, setResult] = useState({ valid: undefined, coins: undefined, events: undefined, possibleSolution: undefined });
+    const [newRecord, setNewRecord] = useState(false);
+
+    useEffect(() => {
+        async function submitSolution() {
+            try {
+                const res = await API.submitSolution(userSolution);
+                console.log(res)
+                setResult({ valid: res.valid, coins: res.coins, events: res.events, possibleSolution: res.possibleSolution });
+                if (res.coins > userContext.user.best_score) {
+                    setNewRecord(true);
+                    userContext.setUser(user => ({ ...user, best_score: res.coins }));
+                }
+            }
+            catch (err) {
+                //TODO
+                console.log(err.message);
+            }
+        }
+        submitSolution();
+    }, [])
+
+    return <>
+        {result.valid === undefined && <h2 className="text-center mt-4">Loading ...</h2>}
+        {result.possibleSolution !== undefined && <div>
+            {/* Title */}
+            <Row className="mt-3"><h2 className="text-center">Game result</h2></Row>
+            <Row className="align-items-center">
+                {/* Result information */}
+                <Col className="pt-2">
+                    <div className="bg-light border rounded d-flex flex-column p-2 gap-3">
+                        {!result.valid && <GameResultInfoLose userSolution={userSolution} />}
+                        {result.valid && <GameResultInfoWin userSolution={userSolution} result={result} />}
+                        <GameResultInfo result={result} newRecord={newRecord} />
+                    </div>
+
+                </Col>
+                {/* Map */}
+                <Col className="col-5 d-flex flex-column justify-content-center">
+                    <h3 className="text-center">{result.valid ? "Your solution" : "A possible solution"}</h3>
+                    <div className="map border rounded mb-3">
+                        <GameMap solution={result.valid ? userSolution : result.possibleSolution} />
+                    </div>
+                </Col>
+            </Row>
+        </div>}
+    </>
+}
+
+function GameResultInfoLose(props) {
+    const underground = useContext(UndergroundContext);
+    const segments = underground.segments;
+    const stations = underground.stations;
+
+    return (
+        <>
+            <h4 className="text-center">You lost !</h4>
+            <div>
+                <h5 className="mb-2">Your solution</h5>
+                <ListGroup as="ol" numbered>
+                    {props.userSolution.map(segmentId =>
+                        <ListGroup.Item key={segmentId} className="border-0 bg-transparent" >{`${stations[segments[segmentId].id_station1].name} - ${stations[segments[segmentId].id_station2].name}`}</ListGroup.Item>
+                    )}
+                </ListGroup>
+            </div>
+        </>
+    )
+}
+
+
+function GameResultInfoWin(props) {
+    const underground = useContext(UndergroundContext);
+    const segments = underground.segments;
+    const stations = underground.stations;
+
+    return (
+        <>
+            <h4 className="text-center">You won !</h4>
+            <div>
+                <h5 className="mb-2">Events</h5>
+                <ListGroup as="ol">
+                    {props.userSolution.map((segmentId, i) =>
+                        <ListGroup.Item key={segmentId} className="border-0 bg-transparent d-flex" >
+                            <span className="col-4 text-center">{`${i}. ${stations[segments[segmentId].id_station1].name} - ${stations[segments[segmentId].id_station2].name}`}</span>
+                            <span className="col-8 text-center">{`${props.result.events[i].description}  (${props.result.events[i].effect})`}</span>
+
+                        </ListGroup.Item>
+                    )}
+                </ListGroup>
+            </div>
+        </>
+    )
+
+}
+
+
+function GameResultInfo(props) {
+    const userContext = useContext(UserContext);
+    const navigate = useNavigate();
+
+    return (
+        <>
+            {/* Coins information */}
+            <div>
+                {/* Case: no record */}
+                {!props.newRecord && <h5 className="">{`Coins earned: ${props.result.coins}`}</h5>}
+                {!props.newRecord &&<h5 className="">{`Personal record: ${userContext.user.best_score}`}</h5>}
+                {/* Case: record */}
+                {props.newRecord && <h5 className="">{`Coins earned: ${props.result.coins} (New record !)`}</h5>}
+            </div>
+            {/* Buttons */}
+            <div className="d-flex justify-content-around mb-2">
+                <GameStartButton />
+                <Button onClick={() => navigate("/")} >Back to home</Button>
+
+            </div>
+        </>
+
+    )
+}
+
+export { GameInstruction, GameMap, GameStartButton, GameSession, GameResult };

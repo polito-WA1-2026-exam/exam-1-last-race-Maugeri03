@@ -13,7 +13,7 @@ import API from "./api/api.js"
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import { LoginForm } from "./components/LoginForm.jsx"
-import { GameInstruction, GameMap, GameStartButton, GameSession } from "./components/Game.jsx"
+import { GameInstruction, GameMap, GameStartButton, GameSession, GameResult } from "./components/Game.jsx"
 
 
 function App() {
@@ -71,6 +71,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginForm />} />
             <Route path="game" element={<GameSession />} />
+            <Route path="game-solution" element={<GameResult/>}/>
             <Route path="*" element={<PageNotFound />} />
           </Route>
         </Routes>
