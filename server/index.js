@@ -148,7 +148,10 @@ async (req, res)=>{
         return res.status(400).send({message:"Wrong parameters", causes:result.array()});
     }
     const gameSession = req.session.gameSession;
-    if(gameSession === undefined || gameSession.checked || (dayjs().unix() - gameSession.begin) >= GAME_DURATION + CHECK_OFFSET ){
+     if(gameSession?.checked){
+        return res.status(200).send(req.session.gameResult);
+    }
+    if((dayjs().unix() - gameSession?.begin) >= GAME_DURATION + CHECK_OFFSET ){
         return res.status(400).send({message:"Time expired"});
     }
     try{
@@ -169,10 +172,12 @@ async (req, res)=>{
                 req.user.best_score = coins;
                 await userDao.updateBestScore(req.user.id, coins);
             }
-            return res.status(200).send({valid:valid, coins:coins, events:list_events});
+            req.session.gameResult = {valid:valid, coins:coins, events:list_events, possibleSolution:[]};
+            return res.status(200).send({valid:valid, coins:coins, events:list_events, possibleSolution:[]});
         }
         else{
-            return res.status(200).send({valid:valid, coins:0, possibleSolution: gameSession.possibleSolution});
+            req.session.gameResult = {valid:valid, coins:0, possibleSolution: gameSession.possibleSolution, events:[]};
+            return res.status(200).send({valid:valid, coins:0, possibleSolution: gameSession.possibleSolution, events:[]});
         }
     }
     catch(err){
