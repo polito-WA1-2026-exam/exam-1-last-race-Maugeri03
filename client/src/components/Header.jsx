@@ -18,7 +18,7 @@ function Header(props) {
         <Navbar className="bg-primary">
             <Container>
                 <Title />
-                {(!userContext.user.id && location.pathname != "/login") && <LoginButton />}
+                {(!userContext.user.id && location.pathname != "/login") && <LoginButton isWaiting={props.isWaitingLog} />}
                 {userContext.user.id && <LogoutContext />}
             </Container>
         </Navbar>
@@ -45,7 +45,7 @@ function LoginButton(props) {
     }
 
     return <>
-        <Button className="primary fs-5" onClick={toLogin} >Login</Button>
+        <Button className="primary fs-5" disabled={props.isWaiting} onClick={toLogin} >Login</Button>
     </>
 }
 
@@ -55,7 +55,7 @@ function LogoutContext(props) {
 
     return (
         <div className="d-flex justify-content-between align-items-center col-3">
-            <p className="fs-5 text-white m-0">Welcome {userContext.user.username}</p>
+            <p className="fs-5 text-white m-0">Hello, {userContext.user.username}</p>
             <LogoutButton />
         </div>);
 
