@@ -6,7 +6,6 @@ import Underground from "./Underground.js";
 function UndergroundDao() {
     //Attributes
     this.db = db;
-    this.underground = undefined;
 
     //Private methods (for getUnderground)
     const getAllStations = () => {
@@ -20,7 +19,7 @@ function UndergroundDao() {
                 else {
                     const stations = {};
                     rows.forEach(row => {
-                        stations[row.id] = {name: row.name, station_x: row.station_x, station_y: row.station_y, name_x: row.name_x, name_y: row.name_y};
+                        stations[row.id] = { name: row.name, station_x: row.station_x, station_y: row.station_y, name_x: row.name_x, name_y: row.name_y };
                     });
                     resolve(stations);
                 }
@@ -48,7 +47,6 @@ function UndergroundDao() {
         });
     }
 
-
     const getAllSegments = () => {
         return new Promise((resolve, reject) => {
             const sql = "SELECT * FROM segments;";
@@ -71,30 +69,25 @@ function UndergroundDao() {
     //Methods
     this.getUnderground = () => {
         return new Promise((resolve, reject) => {
-            if (this.underground != undefined) {
-                resolve(this.underground);
-            }
-            else {
-                Promise.all([getAllStations(), getAllLines(), getAllSegments()])
-                    .then(([stations, lines, segments]) => {
+            Promise.all([getAllStations(), getAllLines(), getAllSegments()])
+                .then(([stations, lines, segments]) => {
 
-                        //Define how many lines a station has
-                        Object.entries(stations).forEach(([id, station]) =>{
-                            station.id_lines = [];
-                            Object.values(segments).forEach(segment =>{
-                                if((segment.id_station1 == id || segment.id_station2 == id) && !station.id_lines.includes(segment.id_line)) station.id_lines.push(segment.id_line);
-                            });
+                    //Define how many lines a station has
+                    Object.entries(stations).forEach(([id, station]) => {
+                        station.id_lines = [];
+                        Object.values(segments).forEach(segment => {
+                            if ((segment.id_station1 == id || segment.id_station2 == id) && !station.id_lines.includes(segment.id_line)) station.id_lines.push(segment.id_line);
                         });
-
-                        const underground = new Underground({ stations: stations, lines: lines, segments: segments });
-                        this.underground = underground;
-                        resolve(underground);
-                    })
-                    .catch(err => {
-                        console.log(err.message);
-                        reject(err);
                     });
-            }
+
+                    const underground = new Underground({ stations: stations, lines: lines, segments: segments });
+                    this.underground = underground;
+                    resolve(underground);
+                })
+                .catch(err => {
+                    console.log(err.message);
+                    reject(err);
+                });
         })
     }
 
