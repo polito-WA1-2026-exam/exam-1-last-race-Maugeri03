@@ -115,7 +115,7 @@ function StationDisplay(props) {
         {(!props.gameMode && station.id_lines.length == 1) && <circle cx={station.station_x} cy={station.station_y} r="7" fill="white" stroke={lines[station.id_lines[0]].color} strokeWidth="3"></circle>}
 
         {/* Stations' name */}
-        <text x={station.name_x} y={station.name_y} fontSize="17" fill="black" fontWeight="bold">
+        <text x={station.name_x} y={station.name_y} fontSize="17" fill="black" fontWeight="bold" textAnchor="middle" >
             {station.name}
         </text>
 
@@ -373,7 +373,7 @@ function GameResultInfoWin(props) {
         <>
             <h4 className="text-center">You won !</h4>
             <div>
-                <h5 className="mb-2">Events</h5>
+                <h5 className="mb-2">Events:</h5>
                 <ListGroup as="ol">
                     {props.userSolution.map((segmentId, i) =>
                         <ListGroup.Item key={segmentId} className="border-0 bg-transparent d-flex" >
