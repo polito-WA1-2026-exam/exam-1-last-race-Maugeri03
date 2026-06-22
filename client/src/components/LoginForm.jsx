@@ -48,17 +48,15 @@ function LoginForm(props) {
                     navigate("/");
                 }
                 //Case: login failed
-                else{
+                else {
                     setShowAlert(true);
                 }
-
             }
-            //TODO
-            catch (err) { console.log(err.message) }
+            catch (err) {
+                navigate("/error", { state: err });
+            }    
         }
         setIsWaiting(false);
-
-        
     }
 
 
@@ -82,8 +80,8 @@ function LoginForm(props) {
                     </Form.Group>
                     {/* Buttons */}
                     <Row className="justify-content-around mt-4 mb-3">
-                        <Button variant={!isWaiting ? "primary" : "secondary" } type="submit" className="col-2" disabled={isWaiting}>{!isWaiting? "Send" : "Sending ..."}</Button>
-                        <Button variant="danger" type="reset" className="col-2" disabled={isWaiting}  onClick={() => handleReset()}>Clear</Button>
+                        <Button variant={!isWaiting ? "primary" : "secondary"} type="submit" className="col-2" disabled={isWaiting}>{!isWaiting ? "Send" : "Sending ..."}</Button>
+                        <Button variant="danger" type="reset" className="col-2" disabled={isWaiting} onClick={() => handleReset()}>Clear</Button>
                     </Row>
                 </Form>
             </Col>
@@ -95,30 +93,29 @@ function LoginForm(props) {
 }
 
 
-function LogoutButton(props){
+function LogoutButton(props) {
     const [isWaiting, setIsWaiting] = useState(false);
     const userContext = useContext(UserContext);
     const navigate = useNavigate();
 
-    async function doLogout(){
+    async function doLogout() {
         setIsWaiting(true);
-        try{
+        try {
             await AUTH.doLogout();
             userContext.setUser({ email: undefined, username: undefined, best_score: undefined, id: undefined });
             navigate("/");
         }
-        catch(err){
-            //TODO
-            console.log(err.message);
+        catch (err) {
+            navigate("/error", { state: err });
         }
         setIsWaiting(false);
     }
 
     return <>
-       {!isWaiting && <Button className="primary fs-5" onClick={doLogout}>Logout</Button>}
-       {isWaiting && <Spinner variant="light" animation="border"></Spinner>}
+        {!isWaiting && <Button className="primary fs-5" onClick={doLogout}>Logout</Button>}
+        {isWaiting && <Spinner variant="light" animation="border"></Spinner>}
     </>
 };
 
 
-export {LoginForm, LogoutButton};
+export { LoginForm, LogoutButton };

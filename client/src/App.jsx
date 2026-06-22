@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Outlet, Routes, Route } from 'react-router';
+import { Outlet, Routes, Route, useNavigate, useLocation } from 'react-router';
 import { Container, Row, Col, Spinner } from "react-bootstrap"
 
 import './App.css';
@@ -15,9 +15,12 @@ import Footer from "./components/Footer.jsx";
 import { LoginForm } from "./components/LoginForm.jsx"
 import { GameInstruction, GameMap, GameStartButton, GameSession, GameResult } from "./components/Game.jsx"
 import { RankingDisplay, RankingButton } from "./components/Ranking.jsx"
+import BannerError from './components/BannerError.jsx';
 
 
 function App() {
+  //Navigate
+  const navigate = useNavigate();
 
   //User state + isWaitingLog
   const [user, setUser] = useState({ email: undefined, username: undefined, best_score: undefined, id: undefined });
@@ -36,8 +39,7 @@ function App() {
         }
       }
       catch (err) {
-        //TODO
-        console.log(err.message);
+        navigate("/error", {state:err});
       }
       finally {
         setIsWaitingLog(false);
@@ -57,12 +59,11 @@ function App() {
         setUnderground({ stations: res.stations, lines: res.lines, segments: res.segments });
       }
       catch (err) {
-        //TODO
-        console.log(err.message);
+        navigate("/error", {state:err});
       }
     };
     getUnderground();
-  }, [user.id]);
+  }, [user.id, navigate]);
 
   return (<>
     <UserContext value={{ user: user, setUser: setUser }}>
@@ -74,6 +75,7 @@ function App() {
             <Route path="game" element={<GameSession />} />
             <Route path="game-solution" element={<GameResult />} />
             <Route path="ranking" element={<RankingDisplay />} />
+            <Route path="error" element={<PageError/>}/>
             <Route path="*" element={<PageNotFound />} />
           </Route>
         </Routes>
@@ -122,12 +124,12 @@ function StartGamePage(props) {
         <GameInstruction />
       </Col>
       {/* Underground map + button for starting the game */}
-      <Col className={"col-6 my-3 d-flex flex-column justify-content-center"}>
+      <Col className={"col-6 my-3 d-flex flex-column justify-content-center align-items-center"}>
         {/* Case: loaded map */}
-        {underground.stations !== undefined && <div className='map border' ><GameMap /></div>}
+        {underground.stations !== undefined && <div className='map border rounded' ><GameMap /></div>}
         {underground.stations !== undefined && <div className='d-flex justify-content-center gap-5 mt-4'>
-          <div className='col-5 d-grid'><GameStartButton /></div>
-          <div className='col-5 d-grid'><RankingButton /></div>
+          <div className='col-6 d-grid'><GameStartButton /></div>
+          <div className='col-6 d-grid'><RankingButton /></div>
         </div>}
         {/* Case> unloaded map */}
         {underground.stations === undefined && <Spinner variant="primary" animation="border" className="big-spinner" />}
@@ -135,6 +137,17 @@ function StartGamePage(props) {
       </Col>
     </Row>
   </>
+}
+
+
+function PageError(props){
+  const location = useLocation();
+  const errorData = location.state;
+
+  return(
+    <BannerError httpError={errorData.httpCode} message={errorData.message}/>
+  );
+
 }
 
 

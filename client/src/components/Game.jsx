@@ -135,8 +135,7 @@ function GameStartButton(props) {
             navigate("/game", { state: gameSession });
         }
         catch (err) {
-            //TODO
-            console.log(err);
+            navigate("/error", { state: err });
         }
         finally {
             setIsWaiting(false);
@@ -156,7 +155,7 @@ function GameSession(props) {
     const gameSession = location.state;
     const [timer, setTimer] = useState(gameSession.timeLimit);
     const [userSolution, setUserSolution] = useState([]);
-    const [nonSelectedSegments, setNonSelectedSegments] = useState(Object.keys(underground.segments));
+    const [nonSelectedSegments, setNonSelectedSegments] = useState(shuffle(Object.keys(underground.segments)));
     const [isSubmitted, setIsSubmitted] = useState(false);
     const navigate = useNavigate();
 
@@ -173,9 +172,19 @@ function GameSession(props) {
         setNonSelectedSegments(segments => segments.concat(removedSegments));
     }
 
-
     function submit() {
         setIsSubmitted(true);
+    }
+
+    //For having a casual order in displaying the cards
+    function shuffle(vector) {
+        const randomVector = [...vector];
+
+        for (let i = randomVector.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (vector.length));
+            [randomVector[i], randomVector[j]] = [randomVector[j], randomVector[i]];
+        }
+        return randomVector;
     }
 
     //For decreasing the timer
@@ -283,6 +292,7 @@ function GameSubmitButton(props) {
 
 
 function GameResult(props) {
+    const navigate = useNavigate();
     const location = useLocation();
     const userSolution = location.state;
     const userContext = useContext(UserContext);
@@ -300,8 +310,7 @@ function GameResult(props) {
                 }
             }
             catch (err) {
-                //TODO
-                console.log(err.message);
+                navigate("/error", { state: err });
             }
         }
         submitSolution();
@@ -343,7 +352,7 @@ function GameResultInfoLose(props) {
         <>
             <h4 className="text-center">You lost !</h4>
             <div>
-                <h5 className="mb-2">Your solution</h5>
+                <h5 className="mb-2">{`Your solution: ${props.userSolution.length == 0 ? "empty" : ""}`}</h5>
                 <ListGroup as="ol" numbered>
                     {props.userSolution.map(segmentId =>
                         <ListGroup.Item key={segmentId} className="border-0 bg-transparent" >{`${stations[segments[segmentId].id_station1].name} - ${stations[segments[segmentId].id_station2].name}`}</ListGroup.Item>
@@ -391,14 +400,14 @@ function GameResultInfo(props) {
             <div>
                 {/* Case: no record */}
                 {!props.newRecord && <h5 className="">{`Coins earned: ${props.result.coins}`}</h5>}
-                {!props.newRecord &&<h5 className="">{`Personal record: ${userContext.user.best_score}`}</h5>}
+                {!props.newRecord && <h5 className="">{`Personal record: ${userContext.user.best_score}`}</h5>}
                 {/* Case: record */}
                 {props.newRecord && <h5 className="">{`Coins earned: ${props.result.coins} (New record !)`}</h5>}
             </div>
             {/* Buttons */}
-            <div className="d-flex justify-content-around mb-2">
-                <GameStartButton />
-                <Button onClick={() => navigate("/")} >Back to home</Button>
+            <div className="d-flex justify-content-center gap-5 mb-2">
+                <div className="col-3 d-grid"><GameStartButton /></div>
+                <div className="col-3 d-grid"><Button onClick={() => navigate("/")} >Back to home</Button></div>
 
             </div>
         </>

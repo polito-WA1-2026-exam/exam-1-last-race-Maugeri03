@@ -47,6 +47,7 @@ function RankingTable(props) {
     const [currentPage, setCurrentPage] = useState([]);
     const [isWaiting, setIsWaiting] = useState(false);
     const pageSize = 10;
+    const navigate = useNavigate();
 
     async function pageLoad(pageNumber) {
         setIsWaiting(true);
@@ -59,8 +60,7 @@ function RankingTable(props) {
             setCurrentPage(newPage);
         }
         catch (err) {
-            //TODO
-            console.log(err);
+            navigate("/error", { state: err });
         }
         finally {
             setIsWaiting(false);
@@ -89,8 +89,7 @@ function RankingTable(props) {
                 setCurrentPage(newPage);
             }
             catch (err) {
-                //TODO
-                console.log(err);
+                navigate("/error", { state: err });
             }
             finally {
                 setIsWaiting(false);
