@@ -105,7 +105,7 @@ app.get(`${PREFIX}/best-scores`, isLoggedIn, [
         }
         try {
             const ranking = await userDao.getRanking(req.query.begin, req.query.end);
-            res.status(200).send(ranking);
+            res.status(200).send({ranking:ranking});
         }
         catch (err) {
             res.status(500).send({ message: "Internal Server Problem" });
@@ -152,6 +152,9 @@ app.post(`${PREFIX}/game/submit`, [isLoggedIn, body("segmentsId").isArray({ min:
             return res.status(400).send({ message: "Wrong parameters", causes: result.array() });
         }
         const gameSession = req.session.gameSession;
+        if(!gameSession){
+            return res.status(400).send({ message: "No active session" });
+        }
         if (gameSession?.checked) {
             return res.status(200).send(req.session.gameResult);
         }

@@ -54,7 +54,7 @@ function RankingTable(props) {
         try {
             const res = await API.getRanking((pageNumber * pageSize) + 1, (pageNumber + 1) * pageSize);
             const newPage = [];
-            res.forEach(element => {
+            res.ranking.forEach(element => {
                 newPage.push({ username: element.username, best_score: element.best_score });
             });
             setCurrentPage(newPage);
@@ -83,7 +83,7 @@ function RankingTable(props) {
             try {
                 const res = await API.getRanking(1, pageSize);
                 const newPage = [];
-                res.forEach(element => {
+                res.ranking.forEach(element => {
                     newPage.push({ username: element.username, best_score: element.best_score });
                 });
                 setCurrentPage(newPage);
