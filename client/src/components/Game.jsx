@@ -293,7 +293,6 @@ function GameResult(props) {
         async function submitSolution() {
             try {
                 const res = await API.submitSolution(userSolution);
-                console.log(res)
                 setResult({ valid: res.valid, coins: res.coins, events: res.events, possibleSolution: res.possibleSolution });
                 if (res.coins > userContext.user.best_score) {
                     setNewRecord(true);

@@ -14,6 +14,7 @@ import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import { LoginForm } from "./components/LoginForm.jsx"
 import { GameInstruction, GameMap, GameStartButton, GameSession, GameResult } from "./components/Game.jsx"
+import { RankingDisplay, RankingButton } from "./components/Ranking.jsx"
 
 
 function App() {
@@ -71,7 +72,8 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginForm />} />
             <Route path="game" element={<GameSession />} />
-            <Route path="game-solution" element={<GameResult/>}/>
+            <Route path="game-solution" element={<GameResult />} />
+            <Route path="ranking" element={<RankingDisplay />} />
             <Route path="*" element={<PageNotFound />} />
           </Route>
         </Routes>
@@ -122,11 +124,11 @@ function StartGamePage(props) {
       {/* Underground map + button for starting the game */}
       <Col className={"col-6 my-3 d-flex flex-column justify-content-center"}>
         {/* Case: loaded map */}
-        {underground.stations !== undefined && <div className='map' ><GameMap/></div>}
+        {underground.stations !== undefined && <div className='map border' ><GameMap /></div>}
         {underground.stations !== undefined && <div className='d-flex justify-content-center gap-5 mt-4'>
-            <GameStartButton/>
-            <GameStartButton/>
-          </div>}
+          <div className='col-5 d-grid'><GameStartButton /></div>
+          <div className='col-5 d-grid'><RankingButton /></div>
+        </div>}
         {/* Case> unloaded map */}
         {underground.stations === undefined && <Spinner variant="primary" animation="border" className="big-spinner" />}
 
